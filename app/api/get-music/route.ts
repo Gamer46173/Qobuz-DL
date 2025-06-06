@@ -7,16 +7,19 @@ const searchParamsSchema = z.object({
     offset: z.preprocess(
         (a) => parseInt(a as string),
         z.number().max(1000, "Offset must be less than 1000").min(0, "Offset must be 0 or greater").default(0)
-      )
-})
+    )
+});
 
 export async function GET(request: NextRequest) {
     const params = Object.fromEntries(new URL(request.url).searchParams.entries());
     try {
         const { q, offset } = searchParamsSchema.parse(params);
         const searchResults = await search(q, 10, offset);
-        return new NextResponse(JSON.stringify({success: true, data: searchResults}), { status: 200 });
+        return NextResponse.json({ success: true, data: searchResults });
     } catch (error: any) {
-        return new NextResponse(JSON.stringify({ success: false, error: error?.errors || error.message || "An error occurred parsing the request." }), { status: 400 });
+        return NextResponse.json({
+            success: false,
+            error: error?.message || "Invalid request"
+        }, { status: 400 });
     }
 }
